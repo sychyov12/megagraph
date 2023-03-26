@@ -57,6 +57,9 @@ namespace monitor
         {
             InitializeComponent();
 
+            MonitoringContext ctx = new MonitoringContext();
+            ctx.GraphPoint.Add(new GraphPoint(DateTime.Now, 1));
+
             FillData();
 
             PrintGraph();
