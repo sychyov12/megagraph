@@ -9,8 +9,7 @@
     {
         public Configuration()
         {
-            AutomaticMigrationsEnabled = true;
-            ContextKey = "monitor.datamodel.MonitoringContext";
+            AutomaticMigrationsEnabled = false;
         }
 
         protected override void Seed(monitor.datamodel.MonitoringContext context)

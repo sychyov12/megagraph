@@ -66,7 +66,7 @@ namespace monitor
             long id = GetSelectedId();
             if (id > 0)
             {
-                Form1 form = new Form1();
+                Form1 form = new Form1(id);
                 form.ShowDialog();
             }
         }

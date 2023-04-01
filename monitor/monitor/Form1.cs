@@ -12,12 +12,19 @@ using LiveCharts.Wpf;
 using monitor.datamodel;
 using System.IO;
 using System.Globalization;
+using System.Windows.Documents;
+using System.Data.Entity;
+using System.Runtime.Remoting.Contexts;
+using System.Transactions;
 
 namespace monitor
 {
     public partial class Form1 : Form
     {
         public PointGraphList gList;
+        public long graphListId;
+
+        MonitoringContext db;
 
         private Color b1 = Color.Coral;
         private Color b0 = Color.FromArgb(255, 240, 240, 240);
@@ -26,39 +33,56 @@ namespace monitor
         {
             gList = new PointGraphList() { Name = "Группа графиков 1" };
 
-            //for (double i = 1; i < 5; i += 1)
-            //{
-            //    PointGraph g = new PointGraph(
-            //        new List<GraphPoint>(new[] {
-            //            new GraphPoint( 1, 1 ),
-            //            new GraphPoint( 2, 2 ),
-            //            new GraphPoint( 3, 3 ),
-            //            new GraphPoint( 4, 3 ),
-            //            new GraphPoint( 5, 2 ),
-            //            new GraphPoint( 6, 1 ),
-            //            new GraphPoint( 7, 1 ),
-            //            new GraphPoint( 8, 1 ),
-            //            new GraphPoint( 9, 4 ),
-            //            new GraphPoint( 10, 5 ),
-            //            new GraphPoint( 11, 2 ),
-            //            new GraphPoint( 12, 6 ),
-            //            new GraphPoint( 13, 6 ),
-            //            new GraphPoint( 14, 4 ),
-            //        })
-            //    );
-            //    g.Name = "График " + i.ToString();
-            //    g.points = g.points.Select(p => new GraphPoint(p.X, p.Y * i)).ToList();
-            //    g.IsSelected = true;
+            //var list = db.GraphList.Where(g => g.Id == graphListId).First();
 
-            //    gList.graphes.Add(g);
-            //}
+            PointGraph pg = new PointGraph(db.GraphPoint.Where(x => x.GraphListId == graphListId).ToList());
+
+            pg.IsSelected = true;
+            pg.Name = "Max";
+            gList.graphes.Add(pg);
+            //var pg1 = new PointGraph(pg.points) { Name = "Min", IsSelected = true };
+            //gList.graphes.Add(pg1);
+            //var pg2 = new PointGraph(pg.points) { Name = "Avg", IsSelected = true };
+            //gList.graphes.Add(pg2);
+            FillDefInterval();
+            UpdateGraphList();
+            PrintGraph();
         }
-        public Form1()
+
+        
+
+        public void SaveData()
         {
+            if (gList.graphes.Count == 0 || gList.graphes[0].points.Count == 0)
+                return;
+
+            db.Database.ExecuteSqlCommand("delete from GraphPoints where GraphListId = {0}", graphListId);
+            var points = gList.graphes[0].points;
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < points.Count; i ++)
+            {
+                var point = points[i];
+                point.GraphListId = graphListId;
+
+                sb.AppendFormat("Insert into GraphPoints(X,Y,GraphListId) Values('{0}',{1},{2});", point.X.ToString("yyyy/MM/dd hh:mm:ss"), point.Y, graphListId);
+                if (i % 1000 == 0)
+                {
+                    db.Database.ExecuteSqlCommand(sb.ToString());
+                    sb.Clear();
+                }
+            }
+        }
+
+        public Form1( long graphListId = 0)
+        {
+            this.graphListId = graphListId;
+
+            db = new MonitoringContext();
+
             InitializeComponent();
 
             MonitoringContext ctx = new MonitoringContext();
-            ctx.GraphPoint.Add(new GraphPoint(DateTime.Now, 1));
 
             FillData();
 
@@ -69,9 +93,11 @@ namespace monitor
 
         private void FillDefInterval()
         {
+            if (gList.graphes.Count == 0 || gList.graphes[0].points.Count == 0)
+                return;
             dateStart = gList.graphes.Select(x => x.points.First().X).Min();
             dateEnd = gList.graphes.Select(x => x.points.Select(p => p.X).Max()).Max();
-            intervalType = 2;
+            intervalType = 3;
         }
 
         private DateTime IncreaseInterval(DateTime interval, int intervalType, int delta = 1)
@@ -109,7 +135,7 @@ namespace monitor
             if (grList.graphes.Count == 0)
                 return unswer;
 
-            grList.graphes.ForEach(gr => unswer.Add(new List<GraphPoint>()));
+            new List<int>(new int[] { 1, 2, 3}).ForEach(gr => unswer.Add(new List<GraphPoint>()));
             //avg
             var interval = RoundInterval(this.dateStart, this.intervalType);
             var maxInterval = RoundInterval(this.dateEnd, this.intervalType);
@@ -123,16 +149,14 @@ namespace monitor
                     double intervalPointValue = 0;
                     try
                     {
-                        if (aggType == 2) // avg
-                            intervalPointValue = grList.graphes[i].points.Where(p => p.X >= interval && p.X < nextInterval).Select(p => p.Y).Average();
-                        else if (aggType == 1) //min
-                            intervalPointValue = grList.graphes[i].points.Where(p => p.X >= interval && p.X < nextInterval).Select(p => p.Y).Min();
-                        else
-                            intervalPointValue = grList.graphes[i].points.Where(p => p.X >= interval && p.X < nextInterval).Select(p => p.Y).Max();
+                        intervalPointValue = grList.graphes[i].points.Where(p => p.X >= interval && p.X < nextInterval).Select(p => p.Y).Max();
+                        unswer[0].Add(new GraphPoint(interval, intervalPointValue));
+                        intervalPointValue = grList.graphes[i].points.Where(p => p.X >= interval && p.X < nextInterval).Select(p => p.Y).Min();
+                        unswer[1].Add(new GraphPoint(interval, intervalPointValue));
+                        intervalPointValue = grList.graphes[i].points.Where(p => p.X >= interval && p.X < nextInterval).Select(p => p.Y).Average();
+                        unswer[2].Add(new GraphPoint(interval, intervalPointValue));
                     }
                     catch { break; }
-
-                    unswer[i].Add(new GraphPoint(interval, intervalPointValue));
                 }
             }
             return unswer;
@@ -142,37 +166,39 @@ namespace monitor
         {
             int maxPointsOnScreen = 100;
             SeriesCollection ser1 = new SeriesCollection();
-            int number = 1;
             var data = SelectPrintedDataForGraph(gList);
-            int i = 0;
+            
             foreach (var g in gList.graphes)
             {
-                var points = data[i];
-                i++;
-                int partCount = Math.Max(g.points.Count / maxPointsOnScreen, 0);
-                //var pointsToShow = new List<GraphPoint>();
-                //for (int i = 0; i < g.points.Count; i += partCount)
-                //    pointsToShow.Add(g.points[i]);
-                ChartValues<double> cv = new ChartValues<double>();
-                List<string> cx = new List<string>();
-                cv.AddRange(points.Select(p => p.Y));
-                cx.AddRange(points.Select(p => p.X.ToString()));
-
-                cartesianChart1.AxisX.Clear();
-                cartesianChart1.AxisX.Add(new Axis()
+                int i = 0;
+                foreach (var points in data)
                 {
-                    Title = gList.Name,
-                    Labels = cx,
-                });
-                LineSeries ls;
+                    int partCount = Math.Max(g.points.Count / maxPointsOnScreen, 0);
+                    //var pointsToShow = new List<GraphPoint>();
+                    //for (int i = 0; i < g.points.Count; i += partCount)
+                    //    pointsToShow.Add(g.points[i]);
+                    ChartValues<double> cv = new ChartValues<double>();
+                    List<string> cx = new List<string>();
+                    cv.AddRange(points.Select(p => p.Y));
+                    cx.AddRange(points.Select(p => p.X.ToString()));
 
-                ls = new LineSeries()
-                {
-                    Title = g.Name,
-                    Values = new ChartValues<double>(cv.Select(x => x)),
-                };
-                if (g.IsSelected)
-                    ser1.Add(ls);
+                    cartesianChart1.AxisX.Clear();
+                    cartesianChart1.AxisX.Add(new Axis()
+                    {
+                        Title = gList.Name,
+                        Labels = cx,
+                    });
+                    LineSeries ls;
+
+                    ls = new LineSeries()
+                    {
+                        Title = i == 1 ? "Min" : (i == 0 ? "Max" : "Avg"),
+                        Values = new ChartValues<double>(cv.Select(x => x)),
+                    };
+                    if (g.IsSelected)
+                        ser1.Add(ls);
+                    i++;
+                }
             }
             cartesianChart1.Series = ser1;
         }
@@ -321,14 +347,14 @@ namespace monitor
                         }
                     }
                 }
-                FillData();
+                gList = new PointGraphList() { Name = "Группа графиков 1" };
                 pg.IsSelected = true;
                 pg.Name = "Max";
                 gList.graphes.Add(pg);
-                var pg1 = new PointGraph(pg.points) { Name = "Min", IsSelected = true };
-                gList.graphes.Add(pg1);
-                var pg2 = new PointGraph(pg.points) { Name = "Avg", IsSelected = true };
-                gList.graphes.Add(pg2);
+                //var pg1 = new PointGraph(pg.points) { Name = "Min", IsSelected = true };
+                //gList.graphes.Add(pg1);
+                //var pg2 = new PointGraph(pg.points) { Name = "Avg", IsSelected = true };
+                //gList.graphes.Add(pg2);
                 FillDefInterval();
                 UpdateGraphList();
                 PrintGraph();
@@ -337,7 +363,16 @@ namespace monitor
 
         private void cartesianChart1_DataClick(object sender, ChartPoint chartPoint)
         {
-            if (intervalType == 2)
+            if (intervalType == 3)
+            {
+                var legend = chartPoint.ChartView.Model.AxisX[0].Labels[(int)chartPoint.X];
+                var dateValue = DateTime.Parse(legend);
+                this.intervalType = 2;
+                this.dateStart = new DateTime(dateValue.Year, dateValue.Month, dateValue.Day, 0, 0, 0);
+                this.dateEnd = this.dateStart.AddDays(1);
+                PrintGraph();
+            }
+            else if (intervalType == 2)
             {
                 var legend = chartPoint.ChartView.Model.AxisX[0].Labels[(int)chartPoint.X];
                 var dateValue = DateTime.Parse(legend);
@@ -359,9 +394,16 @@ namespace monitor
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if (intervalType == 1)
+            if (intervalType == 2)
             {
                 FillDefInterval();
+                PrintGraph();
+            }
+            else if (intervalType == 1)
+            {
+                this.dateStart = new DateTime(dateStart.Year, dateStart.Month, dateStart.Day, 0, 0, 0);
+                this.dateEnd = this.dateStart.AddDays(1);
+                this.intervalType = 2;
                 PrintGraph();
             }
             else if (intervalType == 0)
@@ -385,6 +427,11 @@ namespace monitor
             this.dateStart = IncreaseInterval(this.dateStart, this.intervalType, 10);
             this.dateEnd = IncreaseInterval(this.dateEnd, this.intervalType, 10);
             PrintGraph();
+        }
+
+        private void сохранитьВБазуToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveData();
         }
     }
 }

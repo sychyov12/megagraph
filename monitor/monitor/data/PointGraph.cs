@@ -12,9 +12,9 @@ namespace monitor.datamodel
         public bool IsActive { get; set; }
         public bool IsSelected { get; set; }
         public string Name { get; set; }
-        public PointGraph(List<GraphPoint> points)
+        public PointGraph(IEnumerable<GraphPoint> points)
         {
-            this.points = points;
+            this.points = new List<GraphPoint>(points);
         }
     }
 }

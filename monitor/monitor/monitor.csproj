@@ -26,6 +26,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
+    <AutorunEnabled>true</AutorunEnabled>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
@@ -71,6 +72,9 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -98,7 +102,6 @@
       <DependentUpon>DataListsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="data\DbClasses.cs" />
-    <Compile Include="data\GraphPoint.cs" />
     <Compile Include="data\MonitoringContext.cs" />
     <Compile Include="data\PointGraph.cs" />
     <Compile Include="data\PointGraphList.cs" />
@@ -108,17 +111,9 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\202303251435485_InitialCreate.cs" />
-    <Compile Include="Migrations\202303251435485_InitialCreate.designer.cs">
-      <DependentUpon>202303251435485_InitialCreate.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\202303251540121_1.cs" />
-    <Compile Include="Migrations\202303251540121_1.designer.cs">
-      <DependentUpon>202303251540121_1.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\202303251649174_2.cs" />
-    <Compile Include="Migrations\202303251649174_2.designer.cs">
-      <DependentUpon>202303251649174_2.cs</DependentUpon>
+    <Compile Include="Migrations\202304011236563_1.cs" />
+    <Compile Include="Migrations\202304011236563_1.designer.cs">
+      <DependentUpon>202304011236563_1.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
@@ -132,14 +127,8 @@
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202303251435485_InitialCreate.resx">
-      <DependentUpon>202303251435485_InitialCreate.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202303251540121_1.resx">
-      <DependentUpon>202303251540121_1.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202303251649174_2.resx">
-      <DependentUpon>202303251649174_2.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\202304011236563_1.resx">
+      <DependentUpon>202304011236563_1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -177,6 +166,15 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup />
+  <ItemGroup>
+    <Content Include="Database1.mdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Database1_log.ldf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <DependentUpon>Database1.mdf</DependentUpon>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
