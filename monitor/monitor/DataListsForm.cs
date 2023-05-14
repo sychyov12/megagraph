@@ -23,6 +23,14 @@ namespace monitor
             ReloadList();
         }
 
+        public void SetupDBContext() {
+            db = new MonitoringContext();
+            // устанавливаем простой режим восстановления, чтобы не забивать журнал транзакций
+            db.Database.ExecuteSqlCommand("ALTER DATABASE [{0}] SET RECOVERY SIMPLE;", db.Database.Connection.Database);
+            db.Database.ExecuteSqlCommand("CHECKPOINT;");
+            db.GraphList.Load();
+        }
+
         private void ReloadList()
         {
             dataGridView1.DataSource = db.GraphList.Local.Select(x => new { Номер = x.Id, Название = x.Name }).ToList();

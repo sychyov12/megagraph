@@ -20,6 +20,7 @@ namespace monitor.datamodel
         [Index]
         public long GraphListId { get; set; }
         public GraphList GraphList { get; set; }
+        [Index]
         public DateTime X { get; set; }
         public double Y { get; set; }
         public GraphPoint() { }

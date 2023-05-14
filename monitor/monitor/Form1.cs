@@ -16,6 +16,7 @@ using System.Windows.Documents;
 using System.Data.Entity;
 using System.Runtime.Remoting.Contexts;
 using System.Transactions;
+using monitor.data;
 
 namespace monitor
 {
@@ -24,18 +25,18 @@ namespace monitor
         public PointGraphList gList;
         public long graphListId;
 
-        MonitoringContext db;
+        DbQuery db;
 
         private Color b1 = Color.Coral;
         private Color b0 = Color.FromArgb(255, 240, 240, 240);
 
         public void FillData()
         {
-            gList = new PointGraphList() { Name = "Группа графиков 1" };
+            gList = new PointGraphList() { Name = "Группа графиков" };
 
             //var list = db.GraphList.Where(g => g.Id == graphListId).First();
 
-            PointGraph pg = new PointGraph(db.GraphPoint.Where(x => x.GraphListId == graphListId).ToList());
+            PointGraph pg = db.GetPointGraph(graphListId);
 
             pg.IsSelected = true;
             pg.Name = "Max";
@@ -49,45 +50,26 @@ namespace monitor
             PrintGraph();
         }
 
-        
-
         public void SaveData()
         {
             if (gList.graphes.Count == 0 || gList.graphes[0].points.Count == 0)
                 return;
 
-            db.Database.ExecuteSqlCommand("delete from GraphPoints where GraphListId = {0}", graphListId);
             var points = gList.graphes[0].points;
-
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < points.Count; i ++)
-            {
-                var point = points[i];
-                point.GraphListId = graphListId;
-
-                sb.AppendFormat("Insert into GraphPoints(X,Y,GraphListId) Values('{0}',{1},{2});", point.X.ToString("yyyy/MM/dd hh:mm:ss"), point.Y, graphListId);
-                if (i % 1000 == 0)
-                {
-                    db.Database.ExecuteSqlCommand(sb.ToString());
-                    sb.Clear();
-                }
-            }
+            db.ClearGraphList(graphListId);
+            ProgressBarForm pb = new ProgressBarForm(new Action(() => db.PushPoints(graphListId, points)));
+            db.SendProgress += pb.SendProgress;
+            pb.ShowDialog();
         }
 
         public Form1( long graphListId = 0)
         {
             this.graphListId = graphListId;
 
-            db = new MonitoringContext();
-
             InitializeComponent();
-
-            MonitoringContext ctx = new MonitoringContext();
-
+            db = new DbQuery();
             FillData();
-
             PrintGraph();
-
             UpdateGraphList();
         }
 
@@ -347,10 +329,18 @@ namespace monitor
                         }
                     }
                 }
-                gList = new PointGraphList() { Name = "Группа графиков 1" };
-                pg.IsSelected = true;
-                pg.Name = "Max";
-                gList.graphes.Add(pg);
+                if (gList == null || gList.graphes.Count == 0)
+                {
+                    gList = new PointGraphList() { Name = "Группа графиков 1" };
+                    pg.IsSelected = true;
+                    pg.Name = "Max";
+                    gList.graphes.Add(pg);
+                }
+                else
+                {
+                    var gr = gList.graphes[0].points;
+                    //gr.AddRange(pg.points.Distinct(gr.Where())
+                }
                 //var pg1 = new PointGraph(pg.points) { Name = "Min", IsSelected = true };
                 //gList.graphes.Add(pg1);
                 //var pg2 = new PointGraph(pg.points) { Name = "Avg", IsSelected = true };
@@ -432,6 +422,18 @@ namespace monitor
         private void сохранитьВБазуToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SaveData();
+        }
+
+        private void Clear()
+        {
+            if (gList.graphes.Count == 0 || gList.graphes[0].points.Count == 0)
+                return;
+            db.ClearGraphList(graphListId);
+        }
+
+        private void очиститьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Clear();
         }
     }
 }

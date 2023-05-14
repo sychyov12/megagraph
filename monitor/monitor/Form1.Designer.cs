@@ -40,6 +40,7 @@ namespace monitor
             this.buttonLeft = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.очиститьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
@@ -74,7 +75,7 @@ namespace monitor
             this.графикиToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(939, 30);
+            this.menuStrip1.Size = new System.Drawing.Size(939, 28);
             this.menuStrip1.TabIndex = 2;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -82,7 +83,8 @@ namespace monitor
             // 
             this.графикиToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.добавитьИзФайлаToolStripMenuItem,
-            this.сохранитьВБазуToolStripMenuItem});
+            this.сохранитьВБазуToolStripMenuItem,
+            this.очиститьToolStripMenuItem});
             this.графикиToolStripMenuItem.Name = "графикиToolStripMenuItem";
             this.графикиToolStripMenuItem.Size = new System.Drawing.Size(82, 24);
             this.графикиToolStripMenuItem.Text = "Графики";
@@ -153,6 +155,13 @@ namespace monitor
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // очиститьToolStripMenuItem
+            // 
+            this.очиститьToolStripMenuItem.Name = "очиститьToolStripMenuItem";
+            this.очиститьToolStripMenuItem.Size = new System.Drawing.Size(226, 26);
+            this.очиститьToolStripMenuItem.Text = "Очистить";
+            this.очиститьToolStripMenuItem.Click += new System.EventHandler(this.очиститьToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -187,6 +196,7 @@ namespace monitor
         private System.Windows.Forms.Button buttonRight;
         private System.Windows.Forms.Button buttonLeft;
         private System.Windows.Forms.ToolStripMenuItem сохранитьВБазуToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem очиститьToolStripMenuItem;
     }
 }
 
