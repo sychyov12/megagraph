@@ -11,7 +11,10 @@ namespace monitor.datamodel
         public List<PointGraph> graphes;
         public double YScale { get; set; } = 1;
         public double XScale { get; set; } = 1;
-        public GraphPoint zeroScr { get; set; }
+        public DateTime XMin { get; set; } = DateTime.MinValue;
+        public DateTime XMax { get; set; } = DateTime.MaxValue;
+        public double YMin { get; set; } = double.NaN;
+        public double YMax { get; set; } = double.NaN;
         public string Name { get; set; }
         public PointGraphList()
         {

@@ -14,6 +14,7 @@ namespace monitor.datamodel
         public Color Color { get; set; }
         public bool IsSelected { get; set; }
         public string Name { get; set; }
+        public double Scale { get; set; }
         public PointGraph(IEnumerable<GraphPoint> points)
         {
             this.points = new List<GraphPoint>(points);
